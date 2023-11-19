@@ -20,7 +20,7 @@ x_intensity = np.zeros(1000)
 y_intensity = np.zeros(1000)
 z_intensity = np.zeros(1000)
 
-for t in range(720):
+for t in range(1000):
     x,y,z = sun_intensity(0,1000,t,1380,np.pi/6)
     x_intensity[t] = abs(x)
     y_intensity[t] = y
@@ -48,17 +48,17 @@ def define_gradient():
     #XY-plane wall
     for i in range(y_size):
         for j in range(x_size):
-            temp_grad[0][i][j] = ambient + a*z_intensity/h
+            temp_grad[z_size-1][i][j] = temp_x_neg
 
-    #XZ wall
+    # wall
     for i in range(z_size):
         for j in range(x_size):
-            temp_grad[i][0][j] = ambient + a*y_intensity/h
+            temp_grad[i][y_size-1][j] = temp_y_neg
 
-    #YZ wall
+    #Z-axis wall
     for i in range(z_size):
         for j in range(y_size):
-            temp_grad[i][j][0] = ambient + a*x_intensity/h
+            temp_grad[i][j][x_size-1] = temp_z_neg
 
     return temp_grad
 
@@ -80,11 +80,16 @@ for t in range(time):
     #x-wall
     for i in range(y_size):
         for j in range(x_size):
-            temp_grad[0][i][j] = ambient + a*x_intensity[t]/h
+            temp1[0][i][j] = normal_temp + a*z_intensity[t]/h
     #y-wall
-    
+    for i in range(z_size):
+        for j in range(x_size):
+            temp1[i][0][j] = normal_temp + a*y_intensity[t]/h
     #z-wall
-    
+    for i in range(z_size):
+        for j in range(y_size):
+            temp1[i][j][0] = normal_temp + a*x_intensity[t]/h
+
     
     for z in range(1,z_size-1):
         for y in range(1,y_size-1):
