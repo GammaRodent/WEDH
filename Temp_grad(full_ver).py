@@ -2,6 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+#Sun Intensity
+def sun_intensity(start_time,end_time,current_time,intensity,tilt_angle=0):
+    total_time = end_time-start_time
+    angle_of_sun = (current_time/total_time)*np.pi
+    ind_var = (math.sin(angle_of_sun)*math.cos(tilt_angle))
+    if ind_var == 0:
+        ind_var = 0.00001
+    intensity = intensity*1.4*0.7**(ind_var**-0.678)
+    x_intensity = int(intensity*math.cos(angle_of_sun))
+    y_intensity = int(intensity*math.sin(angle_of_sun)*math.cos(tilt_angle))
+    z_intensity = int(intensity*math.sin(angle_of_sun)*math.sin(tilt_angle))
+    return (x_intensity,y_intensity,z_intensity)
+
+time = np.linspace(0,1000,1000)
+x_intensity = np.zeros(1000)
+y_intensity = np.zeros(1000)
+z_intensity = np.zeros(1000)
+
+for t in range(720):
+    x,y,z = sun_intensity(0,1000,t,1380,np.pi/6)
+    x_intensity[t] = abs(x)
+    y_intensity[t] = y
+    z_intensity[t] = z
+
 #Declare Variable
 dl = 0.1
 dt = 0.0001
@@ -11,33 +35,30 @@ normal_temp = 150
 x_size = 20
 y_size = 20
 z_size = 20
-temp_x_pos = 200
-temp_y_pos = 200
-temp_z_pos = 50
-temp_x_neg = 100
-temp_y_neg = 100
-temp_z_neg = 100
+ambient =25
+a = 1 #solar radiation absorptivity
+h = 1 #convection,radiation heat transfer coefficient
+temp_x_neg = 25
+temp_y_neg = 25
+temp_z_neg = 25
 
 def define_gradient():
     temp_grad = [[[normal_temp for _ in range(x_size)] for _ in range(y_size)] for _ in range(z_size)]
 
-    #X-axis wall
+    #XY-plane wall
     for i in range(y_size):
         for j in range(x_size):
-            temp_grad[0][i][j] = temp_x_pos
-            temp_grad[z_size-1][i][j] = temp_x_neg
+            temp_grad[0][i][j] = ambient + a*z_intensity/h
 
-    #Y-axis wall
+    #XZ wall
     for i in range(z_size):
         for j in range(x_size):
-            temp_grad[i][0][j] = temp_y_pos
-            temp_grad[i][y_size-1][j] = temp_y_neg
+            temp_grad[i][0][j] = ambient + a*y_intensity/h
 
-    #Z-axis wall
+    #YZ wall
     for i in range(z_size):
         for j in range(y_size):
-            temp_grad[i][j][0] = temp_z_pos
-            temp_grad[i][j][x_size-1] = temp_z_neg
+            temp_grad[i][j][0] = ambient + a*x_intensity/h
 
     return temp_grad
 
@@ -54,6 +75,17 @@ plt.colorbar(pcm, ax=axis)
 
 for t in range(time):
     temp2 = define_gradient()
+
+    #setting the outer wall to temperature dependent of sun intensity
+    #x-wall
+    for i in range(y_size):
+        for j in range(x_size):
+            temp_grad[0][i][j] = ambient + a*x_intensity[t]/h
+    #y-wall
+    
+    #z-wall
+    
+    
     for z in range(1,z_size-1):
         for y in range(1,y_size-1):
             for x in range(1,x_size-1):
