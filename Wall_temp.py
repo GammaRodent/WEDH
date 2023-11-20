@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from mpl_toolkits import mplot3d
 
 #Sun Intensity
 def sun_intensity(start_time,end_time,current_time,intensity,tilt_angle=0):
@@ -30,7 +31,8 @@ for t in range(1000):
 thickness = 0.1
 dl = 0.01
 dt = 0.0001
-c = 0.466
+c_wall = 0.466
+c_air = 0.555
 time = 1000
 normal_temp = 25
 a = 0.5 #solar radiation absorptivity
@@ -65,10 +67,15 @@ temp1[2][0] = outside_temp
 temp1[3][0] = outside_temp
 temp1[4][0] = outside_temp
 
+air_temp1 = setup_gradient_air()
+air_temp1 = [[[normal_temp for _ in range(x_size)] for _ in range(y_size)] for _ in range(z_size)]
+
 fig, axis = plt.subplots()
 
 pcm = axis.pcolormesh([temp1[0]], cmap = plt.cm.jet, vmin = 0, vmax = 45)
 plt.colorbar(pcm, ax=axis)
+
+average = np.zeros(0)
 
 for t in range(time):
     temp2 = setup_gradient_wall()
@@ -87,10 +94,41 @@ for t in range(time):
     for i in range(5):
         for j in range(1,int(thickness/dl-1)):
             dd_temp = temp1[i][j+1]+temp1[i][j-1]-2*temp1[i][j]
-            temp2[i][j] = c * dt/(dl**2) * (dd_temp) + temp1[i][j]
+            temp2[i][j] = c_wall * dt/(dl**2) * (dd_temp) + temp1[i][j]
     temp1 = np.copy(temp2)
+    
+    air_temp2 = setup_gradient_air()
+    
+    for i in range(x_size):
+        for j in range(y_size):
+            air_temp1[z_size-1][j][i] = temp1[0][int(thickness/dl)-1]
+    
+    for k in range(z_size):
+        for j in range(y_size):        
+            air_temp1[k][j][x_size-1] = temp1[1][int(thickness/dl)-1]
+            air_temp1[k][j][0] = temp1[2][int(thickness/dl)-1]
+            
+    for i in range(x_size):
+        for k in range(z_size):        
+            air_temp1[k][y_size-1][i] = temp1[3][int(thickness/dl)-1]
+            air_temp1[k][0][i] = temp1[4][int(thickness/dl)-1]
+    
+    for i in range(x_size):
+        for j in range(y_size):
+            for k in range(z_size):
+               dd_temp_x = (air_temp1[z][y][x+1])+(air_temp1[z][y][x-1])-2*(air_temp1[z][y][x])
+               dd_temp_y = (air_temp1[z][y+1][x])+(air_temp1[z][y-1][x])-2*(air_temp1[z][y][x])
+               dd_temp_z = (air_temp1[z+1][y][x])+(air_temp1[z-1][y][x])-2*(air_temp1[z][y][x])
+               air_temp2[z][y][x] = c_air * dt/(dl**2) * (dd_temp_x+dd_temp_y+dd_temp_z) + air_temp1[z][y][x]
+    
+    temp1 = temp2.copy()
+    air_temp1 = air_temp2.copy()
+    
+    average = np.append(average,np.average(air_temp1))
+    
     print(temp1[0])
     pcm.set_array([temp1[0]])
     axis.set_title(f"t = {t}")
-    plt.pause(0.01)
+    plt.pause(0.01)    
+    
 plt.show()
