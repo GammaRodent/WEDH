@@ -70,9 +70,10 @@ temp1[4][0] = outside_temp
 air_temp1 = setup_gradient_air()
 air_temp1 = [[[normal_temp for _ in range(x_size)] for _ in range(y_size)] for _ in range(z_size)]
 
-fig, axis = plt.subplots()
+fig, axis = plt.subplots(nrows = 2)
 
-pcm = axis.pcolormesh([temp1[0]], cmap = plt.cm.jet, vmin = 0, vmax = 45)
+pcm = axis[0].pcolormesh([temp1[0]], cmap = plt.cm.jet, vmin = 25, vmax = 45)
+pcm_air = axis[1].pcolormesh([air_temp1[10]], cmap = plt.cm.jet, vmin = 25, vmax = 45)
 plt.colorbar(pcm, ax=axis)
 
 average = np.zeros(0)
@@ -124,11 +125,10 @@ for t in range(time):
     temp1 = temp2.copy()
     air_temp1 = air_temp2.copy()
     
-    average = np.append(average,np.average(air_temp1))
-    
     print(temp1[0])
     pcm.set_array([temp1[0]])
-    axis.set_title(f"t = {t}")
+    pcm_air.set_array([air_temp1[10]])
+    axis[0].set_title(f"t = {t}")
     plt.pause(0.01)    
     
 plt.show()
